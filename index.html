@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="pt-AO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minha Casa Luanda</title>
+<meta name="description" content="Plataforma de demonstração para arrendar e comprar casa em Luanda, com anúncios verificados e contacto direto por WhatsApp.">
+<meta name="theme-color" content="#0B6B5F">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { color-scheme: light; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+/* Layout concept: marketplace shell. Sticky top bar on desktop, bottom tab bar on phones.
+   Explorar = filter rail + card grid (or schematic map). Detail = gallery + sticky contact card. */
+:root {
+  --bg: #F2F5F4;
+  --surface: #FFFFFF;
+  --ink: #12201D;
+  --muted: #566660;
+  --line: #DCE4E1;
+  --accent: #0B6B5F;
+  --on-accent: #FFFFFF;
+  --accent-soft: #DDEEE9;
+  --accent-ink: #0A4F46;
+  --warn: #8A4305;
+  --warn-soft: #FBEBD5;
+  --bad: #B3261E;
+  --bad-soft: #F9DEDC;
+  --sea: #D6E7EE;
+  --land: #E6EDE7;
+  --shadow: 0 1px 2px rgba(18,32,29,.06), 0 8px 24px rgba(18,32,29,.07);
+  --font-display: 'Bricolage Grotesque', 'Manrope', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1513; --surface: #15211E; --ink: #E7F0EC; --muted: #9BB0A9; --line: #24352F;
+    --accent: #4CC2AC; --on-accent: #062019; --accent-soft: #193A33; --accent-ink: #8EE0CF;
+    --warn: #F0B263; --warn-soft: #3A2A12; --bad: #FF8F86; --bad-soft: #3E1B18;
+    --sea: #13262D; --land: #1A2824;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1513; --surface: #15211E; --ink: #E7F0EC; --muted: #9BB0A9; --line: #24352F;
+  --accent: #4CC2AC; --on-accent: #062019; --accent-soft: #193A33; --accent-ink: #8EE0CF;
+  --warn: #F0B263; --warn-soft: #3A2A12; --bad: #FF8F86; --bad-soft: #3E1B18;
+  --sea: #13262D; --land: #1A2824;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--surface); }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.015em; line-height: 1.15; }
+p { margin: 0; }
+a { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+.wrap { width: 100%; max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* top bar */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
+.brand svg { color: var(--accent); flex-shrink: 0; }
+.nav { display: flex; gap: 4px; }
+.navlink { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 10px; text-decoration: none; color: var(--muted); font-weight: 700; }
+.navlink:hover { background: var(--bg); color: var(--ink); }
+.navlink[aria-current="page"] { color: var(--accent-ink); background: var(--accent-soft); }
+.navlink svg { width: 20px; height: 20px; }
+.badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: var(--on-accent); font-size: 12px; font-weight: 800; }
+.botnav { display: none; }
+
+main { padding-top: 24px; padding-bottom: 64px; }
+.foot { border-top: 1px solid var(--line); padding-block: 24px 40px; color: var(--muted); font-size: 13px; }
+
+/* shared bits */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; text-decoration: none; color: var(--ink); }
+.btn:hover { border-color: var(--accent); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-primary[disabled] { opacity: .45; cursor: not-allowed; filter: none; }
+.btn-danger { color: var(--bad); }
+.btn-block { width: 100%; }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+.tag svg { width: 14px; height: 14px; }
+.tag-ok { background: var(--surface); color: var(--accent-ink); }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+.pill-wait { background: var(--warn-soft); color: var(--warn); }
+.pill-ok { background: var(--accent-soft); color: var(--accent-ink); }
+.pill-no { background: var(--bad-soft); color: var(--bad); }
+.muted { color: var(--muted); }
+.lead { color: var(--muted); font-size: 16px; max-width: 60ch; }
+.page-head { display: grid; gap: 8px; margin-bottom: 20px; }
+.page-head h1 { font-size: clamp(28px, 4.2vw, 40px); }
+
+/* explorar */
+.explore { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; }
+.filters { position: sticky; top: calc(80px + env(safe-area-inset-top, 0px)); display: grid; gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.seg { display: flex; gap: 4px; padding: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; }
+.seg button { flex: 1; min-height: 44px; border: 0; border-radius: 9px; background: transparent; font-weight: 800; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.field { display: grid; gap: 6px; }
+.field > label, .field > .lab { font-size: 13px; font-weight: 700; color: var(--muted); }
+input[type="text"], input[type="number"], input[type="tel"], select, textarea { width: 100%; min-height: 44px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+textarea { min-height: 96px; resize: vertical; }
+.inwrap { position: relative; }
+.inwrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); pointer-events: none; }
+.inwrap input { padding-left: 38px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { flex: 1 1 auto; min-width: 48px; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 700; }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+.check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 600; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; }
+.more { display: grid; gap: 16px; }
+.more-toggle { display: none; }
+.linkbtn { background: none; border: 0; padding: 0; min-height: 44px; color: var(--accent); font-weight: 700; text-align: left; text-decoration: underline; }
+
+.res-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.res-head strong { font-family: var(--font-display); font-size: 20px; }
+.res-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.res-tools select { width: auto; }
+.seg.small button { min-height: 40px; padding: 0 14px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 16px; }
+.card { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; transition: box-shadow .15s ease, transform .15s ease; }
+.card:hover { box-shadow: var(--shadow); }
+@media (prefers-reduced-motion: no-preference) { .card:hover { transform: translateY(-2px); } }
+.thumb { position: relative; aspect-ratio: 16 / 10; background: var(--accent-soft); }
+.thumb > svg { display: block; width: 100%; height: 100%; }
+.thumb .tag { position: absolute; top: 10px; left: 10px; }
+.thumb .ph { position: absolute; left: 10px; bottom: 8px; padding: 2px 8px; border-radius: 6px; background: rgba(0,0,0,.45); color: #fff; font-size: 11px; font-weight: 600; }
+.fav { position: absolute; top: 4px; right: 4px; z-index: 2; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: #fff; }
+.fav span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--surface); color: var(--accent); }
+.fav svg { width: 20px; height: 20px; }
+.card-body { display: grid; gap: 4px; padding: 14px 16px 16px; }
+.price { font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -0.02em; }
+.price small { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--muted); }
+.card h3 { font-size: 16px; font-weight: 700; font-family: var(--font-body); letter-spacing: 0; }
+.card h3 a { color: var(--ink); text-decoration: none; }
+.card h3 a::after { content: ""; position: absolute; inset: 0; }
+.zone { color: var(--accent-ink); font-weight: 700; font-size: 13px; }
+.specs { color: var(--muted); font-size: 13px; }
+.empty { display: grid; justify-items: start; gap: 12px; padding: 32px 24px; background: var(--surface); border: 1px dashed var(--line); border-radius: 14px; }
+.empty h2 { font-size: 22px; }
+
+.mapbox { background: var(--sea); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.mapbox svg { display: block; width: 100%; height: auto; max-height: 640px; }
+.map-land { fill: var(--land); }
+.map-strip { stroke: var(--land); fill: none; stroke-linecap: round; }
+.map-zone { fill: var(--muted); font-size: 13px; font-weight: 700; font-family: var(--font-body); }
+.map-sea { fill: var(--muted); font-size: 13px; font-style: italic; font-family: var(--font-body); }
+.map-dot { fill: var(--muted); opacity: .5; }
+.pin { cursor: pointer; }
+.pin rect { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+.pin text { fill: var(--ink); font-size: 15px; font-weight: 800; font-family: var(--font-body); text-anchor: middle; }
+.pin.sel rect { fill: var(--accent); }
+.pin.sel text { fill: var(--on-accent); }
+.map-note { padding: 8px 12px; font-size: 12px; color: var(--muted); background: var(--surface); border-top: 1px solid var(--line); }
+.map-pick { margin-top: 16px; max-width: 420px; }
+
+/* detalhe */
+.back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; text-decoration: none; }
+.back svg { width: 18px; height: 18px; }
+.detail { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: "gallery contact" "head contact" "info contact"; gap: 20px 28px; align-items: start; }
+.d-gallery { grid-area: gallery; }
+.d-head { grid-area: head; display: grid; gap: 6px; }
+.d-info { grid-area: info; display: grid; gap: 24px; }
+.d-contact { grid-area: contact; position: sticky; top: calc(80px + env(safe-area-inset-top, 0px)); display: grid; gap: 14px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+.d-head .price { font-size: clamp(28px, 4vw, 36px); }
+.d-head h1 { font-size: clamp(22px, 3vw, 28px); font-weight: 700; }
+.gallery { position: relative; border-radius: 14px; overflow: hidden; background: var(--accent-soft); aspect-ratio: 16 / 10; }
+.gallery .slide svg { display: block; width: 100%; height: 100%; }
+.g-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.g-btn svg { width: 20px; height: 20px; }
+.g-prev { left: 10px; } .g-next { right: 10px; }
+.g-dots { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; justify-content: center; gap: 0; }
+.g-dots button { width: 32px; height: 32px; display: grid; place-items: center; border: 0; background: transparent; padding: 0; }
+.g-dots button i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.65); border: 1px solid rgba(0,0,0,.25); }
+.g-dots button[aria-current="true"] i { background: var(--accent); border-color: var(--surface); width: 11px; height: 11px; }
+.gallery .ph { position: absolute; left: 12px; top: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(0,0,0,.45); color: #fff; font-size: 11px; font-weight: 600; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.fact { padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 2px; }
+.fact strong { font-family: var(--font-display); font-size: 20px; }
+.fact span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.d-info h2 { font-size: 18px; margin-bottom: 8px; }
+.amen { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0; list-style: none; }
+.amen li { padding: 6px 14px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; font-size: 13px; }
+.agent { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-ink); font-family: var(--font-display); font-weight: 800; flex-shrink: 0; }
+.agent strong { display: block; }
+.agent span { font-size: 13px; color: var(--accent-ink); font-weight: 700; }
+.safe { font-size: 13px; color: var(--muted); padding-top: 12px; border-top: 1px solid var(--line); }
+.phone { padding: 10px 12px; border-radius: 10px; background: var(--bg); font-weight: 700; word-break: break-word; }
+
+/* anunciar + equipa */
+.two { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 16px; }
+.panel h2 { font-size: 20px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.form-grid .full { grid-column: 1 / -1; }
+.amen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0 12px; }
+.dropzone { display: grid; place-items: center; gap: 4px; padding: 20px; text-align: center; border: 1.5px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; counter-reset: s; }
+.steps li { position: relative; padding-left: 40px; counter-increment: s; }
+.steps li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 800; font-size: 14px; }
+.steps strong { display: block; }
+.steps span { color: var(--muted); font-size: 14px; }
+.ok-box { display: grid; gap: 12px; justify-items: start; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat { padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 2px; }
+.stat strong { font-family: var(--font-display); font-size: 26px; }
+.stat span { font-size: 13px; color: var(--muted); font-weight: 600; }
+.queue { display: grid; gap: 16px; }
+.q-item { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.q-item .thumb { border-radius: 10px; overflow: hidden; align-self: start; }
+.q-body { display: grid; gap: 10px; min-width: 0; }
+.q-body h3 { font-size: 17px; font-family: var(--font-body); font-weight: 700; letter-spacing: 0; }
+.q-checks { display: grid; gap: 0; }
+.q-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.done-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.done-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.sec-title { font-size: 20px; margin: 28px 0 12px; }
+.sec-title:first-child { margin-top: 0; }
+
+/* modal + toast */
+.overlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: end center; background: rgba(8,16,14,.55); padding: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
+.overlay[hidden] { display: none; }
+.sheet { width: 100%; max-width: 480px; display: grid; gap: 14px; padding: 20px; background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); max-height: 100%; overflow: auto; }
+.sheet h2 { font-size: 20px; }
+.sheet textarea { min-height: 120px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > * { flex: 1 1 140px; }
+#toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); z-index: 60; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 10px; background: var(--ink); color: var(--bg); font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 899px) {
+  .explore { grid-template-columns: minmax(0, 1fr); }
+  .filters { position: static; }
+  .more-toggle { display: inline-flex; }
+  .more { display: none; }
+  .filters.open .more { display: grid; }
+  .detail { grid-template-columns: minmax(0, 1fr); grid-template-areas: "gallery" "head" "contact" "info"; }
+  .d-contact { position: static; }
+  .two { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 719px) {
+  .nav { display: none; }
+  main { padding-top: 16px; padding-bottom: 120px; }
+  .botnav { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .botnav .nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+  .botnav .navlink { flex-direction: column; justify-content: center; gap: 2px; min-height: 62px; padding: 6px 4px; font-size: 12px; border-radius: 0; background: transparent; }
+  .botnav .navlink[aria-current="page"] { background: transparent; box-shadow: inset 0 3px 0 var(--accent); }
+  .botnav .badge { position: absolute; top: 6px; left: calc(50% + 8px); min-width: 18px; height: 18px; font-size: 11px; }
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .q-item { grid-template-columns: minmax(0, 1fr); }
+  .stats { gap: 8px; }
+  .stat { padding: 12px; }
+  .stat strong { font-size: 22px; }
+  #toast { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#explorar" aria-label="Minha Casa, página inicial">
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M4 15 16 5l12 10v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V15Z" fill="currentColor"/><path d="M12 27v-8a4 4 0 0 1 8 0v8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+      Minha Casa
+    </a>
+    <nav class="nav" id="topnav" aria-label="Principal"></nav>
+  </div>
+</header>
+
+<main class="wrap" id="main"></main>
+
+<footer class="foot">
+  <div class="wrap">Demonstração com dados de exemplo. Os imóveis, preços, fotos e contactos são fictícios e o nome "Minha Casa" é provisório. Os favoritos e os anúncios que criares ficam só neste navegador.</div>
+</footer>
+
+<div class="botnav"><nav class="nav" id="botnav" aria-label="Principal"></nav></div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- helpers ---------- */
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var TODAY = new Date().toISOString().slice(0, 10);
+  var MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  function fmtDate(iso) { var p = iso.split('-'); return (+p[2]) + ' ' + MONTHS[+p[1] - 1]; }
+  function kz(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' Kz'; }
+  function short(p) {
+    if (p.mode === 'rent') return Math.round(p.price / 1000) + ' mil';
+    var m = p.price / 1e6; return (Math.round(m * 10) / 10).toString().replace('.', ',') + ' M';
+  }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function norm(s) { return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+  function specs(p) { return p.beds + (p.beds === 1 ? ' quarto' : ' quartos') + ' · ' + p.baths + ' WC · ' + p.area + ' m²'; }
+  function initials(n) { return n.split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase() || '?'; }
+
+  var ICON = {
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+    heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+    shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+    left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+    right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+    wa: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-4.2A8 8 0 1 1 8.4 18.8L4 20z"/><path d="M9 9.5c.3 2.2 2.3 4.2 5 5.2l1.3-1.4-1.9-1-.9.8c-.8-.4-1.7-1.3-2.1-2.1l.8-.9-1-1.9L9 9.5z"/></svg>'
+  };
+  function heart(on) {
+    return '<svg viewBox="0 0 24 24" fill="' + (on ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
+  }
+
+  /* ---------- data ---------- */
+  var ZONES = ['Talatona', 'Benfica', 'Maianga', 'Kilamba', 'Miramar', 'Ingombota', 'Viana', 'Cacuaco', 'Ilha de Luanda'];
+  var AMEN = ['Água', 'Energia', 'Segurança', 'Estacionamento', 'Gerador', 'Varanda', 'Condomínio fechado', 'Ar condicionado'];
+  var AGENTS = {
+    ana: { name: 'Ana Ferreira', phone: '+244 9XX XXX XXX' },
+    carlos: { name: 'Carlos Mendes', phone: '+244 9XX XXX XXX' },
+    beatriz: { name: 'Beatriz Lopes', phone: '+244 9XX XXX XXX' }
+  };
+  function L(o) { o.status = o.status || 'approved'; return o; }
+  var SEED = [
+    L({ id: 'p1', mode: 'rent', kind: 'apt', title: 'T2 mobilado com varanda', zone: 'Talatona', price: 450000, beds: 2, baths: 2, area: 95, furn: true, amen: ['Água', 'Energia', 'Segurança', 'Estacionamento', 'Varanda'], desc: 'Apartamento luminoso num condomínio com portaria 24 horas. Cozinha equipada, ar condicionado nos quartos e lugar de estacionamento. Perto de escolas e de comércio.', agent: 'ana', verified: '2026-10-27', pal: 0 }),
+    L({ id: 'p2', mode: 'rent', kind: 'house', title: 'Moradia T3 com quintal', zone: 'Benfica', price: 600000, beds: 3, baths: 2, area: 140, furn: false, amen: ['Água', 'Energia', 'Estacionamento', 'Gerador'], desc: 'Moradia independente com quintal, garagem para dois carros e gerador. Ideal para família. Zona calma e com acesso fácil à estrada principal.', agent: 'carlos', verified: '2026-10-25', pal: 1 }),
+    L({ id: 'p3', mode: 'rent', kind: 'apt', title: 'T1 perto do centro', zone: 'Maianga', price: 280000, beds: 1, baths: 1, area: 55, furn: false, amen: ['Água', 'Energia', 'Segurança'], desc: 'T1 arrumado no segundo andar, com sala ampla e cozinha separada. Prédio com segurança e fácil acesso a transportes.', agent: 'ana', verified: '2026-10-29', pal: 2 }),
+    L({ id: 'p4', mode: 'rent', kind: 'apt', title: 'T2 com vista para o mar', zone: 'Miramar', price: 750000, beds: 2, baths: 2, area: 105, furn: true, amen: ['Água', 'Energia', 'Segurança', 'Estacionamento', 'Varanda', 'Ar condicionado'], desc: 'Apartamento mobilado e equipado, com varanda virada ao mar. Condomínio com segurança e garagem. Disponível para contrato anual.', agent: 'beatriz', verified: '2026-10-22', pal: 3 }),
+    L({ id: 'p5', mode: 'rent', kind: 'apt', title: 'T3 em prédio com elevador', zone: 'Kilamba', price: 350000, beds: 3, baths: 2, area: 110, furn: false, amen: ['Água', 'Energia', 'Segurança'], desc: 'T3 espaçoso em prédio com elevador e segurança. Três quartos, duas casas de banho e cozinha grande. Perto de escolas e de espaços verdes.', agent: 'carlos', verified: '2026-10-20', pal: 4 }),
+    L({ id: 'p6', mode: 'rent', kind: 'apt', title: 'T2 económico em Viana', zone: 'Viana', price: 180000, beds: 2, baths: 1, area: 70, furn: false, amen: ['Água', 'Energia'], desc: 'T2 simples e bem cuidado, ideal para quem começa. Renda acessível, com água e energia já ligadas.', agent: 'beatriz', verified: '2026-10-18', pal: 5 }),
+    L({ id: 'p7', mode: 'rent', kind: 'apt', title: 'T1 mobilado no centro', zone: 'Ingombota', price: 320000, beds: 1, baths: 1, area: 60, furn: true, amen: ['Água', 'Energia', 'Segurança', 'Ar condicionado'], desc: 'T1 totalmente mobilado, pronto a habitar. Ar condicionado, internet instalada e segurança no prédio. A poucos minutos de escritórios e restaurantes.', agent: 'ana', verified: '2026-10-30', pal: 1 }),
+    L({ id: 'p8', mode: 'rent', kind: 'house', title: 'Casa T2 com quintal pequeno', zone: 'Cacuaco', price: 150000, beds: 2, baths: 1, area: 80, furn: false, amen: ['Água', 'Energia'], desc: 'Casa simples com quintal pequeno e muro à volta. Rua tranquila, perto de comércio local.', agent: 'carlos', verified: '2026-10-17', pal: 2 }),
+    L({ id: 'b1', mode: 'buy', kind: 'apt', title: 'Apartamento T3 no Kilamba', zone: 'Kilamba', price: 65000000, beds: 3, baths: 2, area: 120, furn: false, amen: ['Água', 'Energia', 'Segurança', 'Estacionamento'], desc: 'Apartamento T3 com acabamentos modernos, lugar de estacionamento e segurança. Documentação em ordem e pronto para escritura.', agent: 'carlos', verified: '2026-10-26', pal: 4 }),
+    L({ id: 'b2', mode: 'buy', kind: 'house', title: 'Moradia T4 em condomínio', zone: 'Talatona', price: 180000000, beds: 4, baths: 3, area: 260, furn: false, amen: ['Água', 'Energia', 'Segurança', 'Estacionamento', 'Gerador', 'Condomínio fechado'], desc: 'Moradia T4 em condomínio fechado, com jardim, garagem e gerador. Suite principal com closet. Segurança permanente à entrada.', agent: 'beatriz', verified: '2026-10-23', pal: 3 }),
+    L({ id: 'b3', mode: 'buy', kind: 'apt', title: 'Apartamento T2 em Miramar', zone: 'Miramar', price: 95000000, beds: 2, baths: 2, area: 90, furn: false, amen: ['Água', 'Energia', 'Segurança', 'Varanda'], desc: 'T2 em zona nobre, com varanda e luz natural durante todo o dia. Prédio bem conservado e com segurança.', agent: 'ana', verified: '2026-10-28', pal: 0 }),
+    L({ id: 'b4', mode: 'buy', kind: 'apt', title: 'Apartamento T3 no Benfica', zone: 'Benfica', price: 85000000, beds: 3, baths: 2, area: 130, furn: false, amen: ['Água', 'Energia', 'Estacionamento'], desc: 'T3 amplo com sala e cozinha separadas. Estacionamento coberto e acesso rápido às principais vias.', agent: 'carlos', verified: '2026-10-21', pal: 5 }),
+    L({ id: 'b5', mode: 'buy', kind: 'house', title: 'Moradia T3 com terreno', zone: 'Viana', price: 48000000, beds: 3, baths: 2, area: 150, furn: false, amen: ['Água', 'Energia'], desc: 'Moradia T3 num terreno amplo, com espaço para ampliar. Boa opção para quem quer construir a longo prazo.', agent: 'beatriz', verified: '2026-10-19', pal: 2 }),
+    L({ id: 'b6', mode: 'buy', kind: 'apt', title: 'Apartamento T2 na Ilha', zone: 'Ilha de Luanda', price: 120000000, beds: 2, baths: 2, area: 100, furn: true, amen: ['Água', 'Energia', 'Segurança', 'Varanda', 'Ar condicionado'], desc: 'T2 mobilado junto à baía, com varanda e ar condicionado. Prédio com segurança e zona de lazer.', agent: 'ana', verified: '2026-10-16', pal: 3 })
+  ];
+  function pendingSeed() {
+    return [
+      L({ id: 'n1', status: 'pending', mode: 'rent', kind: 'apt', title: 'T1 novo, nunca habitado', zone: 'Kilamba', price: 220000, beds: 1, baths: 1, area: 50, furn: false, amen: ['Água', 'Energia', 'Segurança'], desc: 'T1 novo, com acabamentos de qualidade. Prédio com elevador.', who: 'Mário Dias', phone: '+244 9XX XXX XXX', pal: 4 }),
+      L({ id: 'n2', status: 'pending', mode: 'buy', kind: 'house', title: 'Moradia T3 com acabamentos finais', zone: 'Talatona', price: 140000000, beds: 3, baths: 3, area: 200, furn: false, amen: ['Água', 'Energia', 'Estacionamento', 'Condomínio fechado'], desc: 'Moradia T3 num condomínio com segurança. Jardim e garagem.', who: 'Imobiliária Exemplo', phone: '+244 9XX XXX XXX', pal: 1 })
+    ];
+  }
+
+  /* ---------- state ---------- */
+  var KEY = 'mcl-demo-v1';
+  var S = loadState();
+  function freshState() { return { favs: [], items: pendingSeed(), contacts: 0 }; }
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { var o = JSON.parse(raw); if (o && o.favs && o.items) return o; }
+    } catch (e) { /* storage unavailable */ }
+    return freshState();
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ } }
+  function all() { return SEED.concat(S.items); }
+  function approved() { return all().filter(function (p) { return p.status === 'approved'; }); }
+  function byId(id) { return all().filter(function (p) { return p.id === id; })[0]; }
+  function agentOf(p) {
+    if (p.agent && AGENTS[p.agent]) return AGENTS[p.agent];
+    return { name: p.who || 'Anunciante', phone: p.phone || '+244 9XX XXX XXX' };
+  }
+
+  var F = { mode: 'rent', q: '', zone: '', max: 0, beds: 0, furn: false, sort: 'recent', view: 'list', open: false, sel: '' };
+  var current = { view: 'explorar', arg: null };
+  var submitted = null;
+  var confirmReset = false;
+  var slide = 0;
+  var lastFocus = null;
+
+  /* ---------- illustrations ---------- */
+  var PALS = [
+    ['#9FD3EA', '#E6F4FA', '#F3E9DA', '#0B6B5F', '#A8CFA0'],
+    ['#F6C79B', '#FCE9D4', '#E4ECEF', '#B9532B', '#C9D8A3'],
+    ['#B7C8F0', '#E8EDFB', '#F1E4E4', '#3F5AA8', '#A9CBB0'],
+    ['#8EDCCB', '#E1F6F1', '#F6EFD9', '#14796B', '#B7D49A'],
+    ['#F2D98B', '#FBF3D2', '#E7E4F0', '#6C4AA0', '#B5D3A0'],
+    ['#A7D9F0', '#EAF7FC', '#EFE3D3', '#C27A1B', '#9FC9A8']
+  ];
+  var gid = 0;
+  function wins(x, y, cols, rows, w, h, gx, gy, fill) {
+    var s = '';
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+      s += '<rect x="' + (x + c * gx) + '" y="' + (y + r * gy) + '" width="' + w + '" height="' + h + '" rx="1.5" fill="' + fill + '"/>';
+    }
+    return s;
+  }
+  function tower(P) {
+    var w = '#6F97A8';
+    return '<circle cx="270" cy="38" r="16" fill="#fff" opacity=".75"/>' +
+      '<rect x="0" y="150" width="320" height="50" fill="' + P[4] + '"/>' +
+      '<rect x="46" y="78" width="64" height="72" fill="' + P[2] + '" opacity=".9"/>' + wins(56, 88, 2, 3, 16, 12, 28, 20, w) +
+      '<rect x="222" y="96" width="54" height="54" fill="' + P[2] + '" opacity=".9"/>' + wins(232, 106, 2, 2, 14, 12, 22, 20, w) +
+      '<rect x="120" y="26" width="92" height="124" fill="' + P[2] + '"/>' +
+      '<rect x="120" y="26" width="92" height="8" fill="' + P[3] + '"/>' + wins(130, 44, 3, 4, 16, 12, 26, 20, w) +
+      '<rect x="154" y="124" width="24" height="26" fill="' + P[3] + '"/>' +
+      '<circle cx="40" cy="146" r="12" fill="' + P[3] + '" opacity=".55"/><rect x="38" y="146" width="4" height="8" fill="#5b4636"/>';
+  }
+  function house(P) {
+    var w = '#6F97A8';
+    return '<circle cx="48" cy="40" r="16" fill="#fff" opacity=".75"/>' +
+      '<rect x="0" y="146" width="320" height="54" fill="' + P[4] + '"/>' +
+      '<rect x="96" y="82" width="132" height="68" fill="' + P[2] + '"/>' +
+      '<polygon points="86,84 162,34 238,84" fill="' + P[3] + '"/>' +
+      '<rect x="200" y="46" width="12" height="24" fill="' + P[3] + '" opacity=".8"/>' +
+      '<rect x="150" y="108" width="24" height="42" fill="' + P[3] + '"/>' +
+      wins(108, 98, 1, 1, 26, 22, 0, 0, w) + wins(190, 98, 1, 1, 26, 22, 0, 0, w) +
+      '<circle cx="262" cy="118" r="26" fill="' + P[3] + '" opacity=".6"/><rect x="259" y="132" width="6" height="18" fill="#5b4636"/>' +
+      '<rect x="20" y="136" width="64" height="4" fill="#fff" opacity=".8"/>';
+  }
+  function living(P, id) {
+    return '<rect width="320" height="200" fill="' + P[2] + '"/>' +
+      '<rect y="142" width="320" height="58" fill="' + P[3] + '" opacity=".18"/>' +
+      '<rect x="208" y="30" width="86" height="76" rx="3" fill="url(#' + id + ')" stroke="#fff" stroke-width="4"/><path d="M251 30v76M208 68h86" stroke="#fff" stroke-width="3"/>' +
+      '<rect x="48" y="24" width="64" height="44" rx="2" fill="' + P[0] + '" stroke="#fff" stroke-width="4"/><circle cx="68" cy="44" r="8" fill="#fff" opacity=".7"/>' +
+      '<ellipse cx="140" cy="176" rx="96" ry="13" fill="' + P[3] + '" opacity=".25"/>' +
+      '<rect x="52" y="92" width="136" height="32" rx="10" fill="' + P[3] + '" opacity=".85"/>' +
+      '<rect x="46" y="108" width="148" height="38" rx="10" fill="' + P[3] + '"/>' +
+      '<rect x="58" y="146" width="6" height="12" fill="#5b4636"/><rect x="176" y="146" width="6" height="12" fill="#5b4636"/>' +
+      '<circle cx="78" cy="106" r="9" fill="#fff" opacity=".55"/><circle cx="162" cy="106" r="9" fill="#fff" opacity=".55"/>' +
+      '<rect x="244" y="112" width="3" height="40" fill="#5b4636"/><polygon points="232,114 259,114 253,90 238,90" fill="#F6D98B"/>';
+  }
+  function bedroom(P, id) {
+    return '<rect width="320" height="200" fill="' + P[2] + '"/>' +
+      '<rect y="146" width="320" height="54" fill="' + P[3] + '" opacity=".18"/>' +
+      '<rect x="26" y="30" width="70" height="80" rx="3" fill="url(#' + id + ')" stroke="#fff" stroke-width="4"/><path d="M61 30v80" stroke="#fff" stroke-width="3"/>' +
+      '<rect x="116" y="52" width="140" height="62" rx="6" fill="' + P[3] + '"/>' +
+      '<rect x="108" y="110" width="156" height="42" rx="8" fill="#fff"/>' +
+      '<rect x="108" y="128" width="156" height="28" rx="6" fill="' + P[3] + '" opacity=".78"/>' +
+      '<rect x="122" y="100" width="46" height="18" rx="9" fill="#fff" stroke="' + P[1] + '" stroke-width="2"/><rect x="204" y="100" width="46" height="18" rx="9" fill="#fff" stroke="' + P[1] + '" stroke-width="2"/>' +
+      '<rect x="116" y="152" width="8" height="12" fill="#5b4636"/><rect x="248" y="152" width="8" height="12" fill="#5b4636"/>' +
+      '<rect x="278" y="118" width="30" height="36" rx="3" fill="' + P[3] + '" opacity=".6"/><rect x="286" y="96" width="14" height="22" rx="4" fill="#F6D98B"/>';
+  }
+  function scene(p, v) {
+    var P = PALS[p.pal % PALS.length], id = 'g' + (++gid);
+    var inner = v === 0 ? (p.kind === 'house' ? house(P) : tower(P)) : (v === 1 ? living(P, id) : bedroom(P, id));
+    var label = ['Exterior', 'Sala', 'Quarto'][v] + ' (ilustração): ' + esc(p.title);
+    return '<svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + label + '"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + P[0] + '"/><stop offset="1" stop-color="' + P[1] + '"/></linearGradient></defs>' +
+      (v === 0 ? '<rect width="320" height="200" fill="url(#' + id + ')"/>' : '') + inner + '</svg>';
+  }
+
+  /* ---------- nav ---------- */
+  var NAV = [['explorar', 'Explorar', ICON.search], ['favoritos', 'Favoritos', ICON.heart], ['anunciar', 'Anunciar', ICON.plus], ['equipa', 'Equipa', ICON.shield]];
+  function navHtml() {
+    var pend = S.items.filter(function (i) { return i.status === 'pending'; }).length;
+    return NAV.map(function (n) {
+      var cur = current.view === n[0] || (n[0] === 'explorar' && current.view === 'imovel');
+      var b = '';
+      if (n[0] === 'favoritos' && S.favs.length) b = '<b class="badge">' + S.favs.length + '</b>';
+      if (n[0] === 'equipa' && pend) b = '<b class="badge">' + pend + '</b>';
+      return '<a href="#' + n[0] + '" class="navlink"' + (cur ? ' aria-current="page"' : '') + '>' + n[2] + '<span>' + n[1] + '</span>' + b + '</a>';
+    }).join('');
+  }
+  function updateNav() { $('#topnav').innerHTML = navHtml(); $('#botnav').innerHTML = navHtml(); }
+
+  /* ---------- cards ---------- */
+  function card(p) {
+    var fav = S.favs.indexOf(p.id) > -1;
+    return '<article class="card">' +
+      '<div class="thumb">' + scene(p, 0) + '<span class="tag tag-ok">' + ICON.check + 'Verificado</span>' +
+      '<button class="fav" data-act="fav" data-id="' + p.id + '" aria-pressed="' + fav + '" aria-label="' + (fav ? 'Remover dos favoritos' : 'Guardar nos favoritos') + '"><span>' + heart(fav) + '</span></button>' +
+      '<span class="ph">Foto ilustrativa</span></div>' +
+      '<div class="card-body"><p class="price">' + kz(p.price) + (p.mode === 'rent' ? ' <small>/mês</small>' : '') + '</p>' +
+      '<h3><a href="#imovel-' + p.id + '">' + esc(p.title) + '</a></h3>' +
+      '<p class="zone">' + esc(p.zone) + ', Luanda</p><p class="specs">' + specs(p) + '</p></div></article>';
+  }
+
+  /* ---------- explorar ---------- */
+  var MAXES = {
+    rent: [[0, 'Qualquer preço'], [200000, 'Até 200.000 Kz'], [350000, 'Até 350.000 Kz'], [500000, 'Até 500.000 Kz'], [800000, 'Até 800.000 Kz']],
+    buy: [[0, 'Qualquer preço'], [50000000, 'Até 50 M Kz'], [100000000, 'Até 100 M Kz'], [150000000, 'Até 150 M Kz'], [250000000, 'Até 250 M Kz']]
+  };
+  function viewExplorar() {
+    var n = approved().length;
+    return '<div class="page-head"><h1>Encontra a tua casa em Luanda</h1><p class="lead">' + n + ' imóveis verificados para arrendar ou comprar. Falas diretamente com o corretor, sem intermediários.</p></div>' +
+      '<div class="explore"><aside class="filters" id="filters" aria-label="Filtros"></aside><section id="results" aria-live="polite"></section></div>';
+  }
+  function renderFilters() {
+    var el = $('#filters'); if (!el) return;
+    el.classList.toggle('open', F.open);
+    var zoneOpts = '<option value="">Todas as zonas</option>' + ZONES.map(function (z) { return '<option value="' + z + '"' + (F.zone === z ? ' selected' : '') + '>' + z + '</option>'; }).join('');
+    var maxOpts = MAXES[F.mode].map(function (m) { return '<option value="' + m[0] + '"' + (F.max === m[0] ? ' selected' : '') + '>' + m[1] + '</option>'; }).join('');
+    var beds = [0, 1, 2, 3, 4].map(function (b) { return '<button type="button" class="chip" data-act="beds" data-v="' + b + '" aria-pressed="' + (F.beds === b) + '">' + (b === 0 ? 'Todos' : b + '+') + '</button>'; }).join('');
+    el.innerHTML =
+      '<div class="seg" role="group" aria-label="Tipo de negócio"><button type="button" data-act="mode" data-v="rent" aria-pressed="' + (F.mode === 'rent') + '">Arrendar</button><button type="button" data-act="mode" data-v="buy" aria-pressed="' + (F.mode === 'buy') + '">Comprar</button></div>' +
+      '<div class="field"><label for="f-q">Zona, bairro ou palavra</label><div class="inwrap">' + ICON.search + '<input type="text" id="f-q" placeholder="Por exemplo: Talatona, varanda" value="' + esc(F.q) + '" autocomplete="off"></div></div>' +
+      '<button type="button" class="btn more-toggle" data-act="more" aria-expanded="' + F.open + '">' + (F.open ? 'Menos filtros' : 'Mais filtros') + '</button>' +
+      '<div class="more">' +
+      '<div class="field"><label for="f-zone">Zona</label><select id="f-zone">' + zoneOpts + '</select></div>' +
+      '<div class="field"><label for="f-max">Preço máximo</label><select id="f-max">' + maxOpts + '</select></div>' +
+      '<div class="field"><span class="lab" id="lab-beds">Quartos</span><div class="chips" role="group" aria-labelledby="lab-beds">' + beds + '</div></div>' +
+      '<label class="check"><input type="checkbox" id="f-furn"' + (F.furn ? ' checked' : '') + '> Só mobilados</label>' +
+      '<button type="button" class="linkbtn" data-act="clear">Limpar filtros</button></div>';
+  }
+  function filtered() {
+    var q = norm(F.q.trim());
+    var list = approved().filter(function (p) {
+      if (p.mode !== F.mode) return false;
+      if (F.zone && p.zone !== F.zone) return false;
+      if (F.max && p.price > F.max) return false;
+      if (F.beds && p.beds < F.beds) return false;
+      if (F.furn && !p.furn) return false;
+      if (q && norm(p.title + ' ' + p.zone + ' ' + p.desc + ' ' + p.amen.join(' ')).indexOf(q) < 0) return false;
+      return true;
+    });
+    list.sort(function (a, b) {
+      if (F.sort === 'low') return a.price - b.price;
+      if (F.sort === 'high') return b.price - a.price;
+      return (b.verified || '').localeCompare(a.verified || '');
+    });
+    return list;
+  }
+  var ZPOS = { 'Ilha de Luanda': [100, 62], 'Ingombota': [178, 132], 'Miramar': [168, 208], 'Maianga': [262, 176], 'Cacuaco': [304, 44], 'Viana': [330, 236], 'Benfica': [130, 336], 'Talatona': [214, 396], 'Kilamba': [330, 336] };
+  function mapHtml(list) {
+    var byZone = {};
+    list.forEach(function (p) { (byZone[p.zone] = byZone[p.zone] || []).push(p); });
+    var s = '<svg viewBox="0 0 400 440" role="group" aria-label="Mapa esquemático das zonas de Luanda"><path class="map-land" d="M110 0H400V440H40C60 360 90 300 110 250C130 215 150 190 130 150C115 120 125 60 110 0Z"/>' +
+      '<path class="map-strip" stroke-width="14" d="M84 24C100 52 112 80 116 104"/><text class="map-sea" x="14" y="250" transform="rotate(-72 14 250)">Oceano Atlântico</text>';
+    ZONES.forEach(function (z) {
+      var pos = ZPOS[z], items = byZone[z] || [];
+      if (!items.length) {
+        s += '<circle class="map-dot" cx="' + pos[0] + '" cy="' + pos[1] + '" r="4"/><text class="map-zone" x="' + (pos[0] + 8) + '" y="' + (pos[1] + 5) + '" opacity=".7">' + z + '</text>';
+        return;
+      }
+      s += '<text class="map-zone" x="' + pos[0] + '" y="' + (pos[1] - 24) + '" text-anchor="middle">' + z + '</text>';
+      items.forEach(function (p, i) {
+        var y = pos[1] + i * 34;
+        s += '<g class="pin' + (F.sel === p.id ? ' sel' : '') + '" tabindex="0" role="button" data-act="pin" data-id="' + p.id + '" aria-label="' + esc(p.title) + ', ' + esc(p.zone) + ', ' + kz(p.price) + '"><rect x="' + (pos[0] - 32) + '" y="' + (y - 14) + '" width="64" height="28" rx="14"/><text x="' + pos[0] + '" y="' + (y + 5) + '">' + short(p) + '</text></g>';
+      });
+    });
+    return s + '</svg>';
+  }
+  function renderResults() {
+    var el = $('#results'); if (!el) return;
+    var list = filtered();
+    var head = '<div class="res-head"><strong>' + list.length + (list.length === 1 ? ' imóvel' : ' imóveis') + '</strong><div class="res-tools">' +
+      '<label class="muted" for="f-sort" style="font-size:13px;font-weight:700">Ordenar</label><select id="f-sort"><option value="recent"' + (F.sort === 'recent' ? ' selected' : '') + '>Mais recentes</option><option value="low"' + (F.sort === 'low' ? ' selected' : '') + '>Preço mais baixo</option><option value="high"' + (F.sort === 'high' ? ' selected' : '') + '>Preço mais alto</option></select>' +
+      '<div class="seg small" role="group" aria-label="Vista"><button type="button" data-act="view" data-v="list" aria-pressed="' + (F.view === 'list') + '">Lista</button><button type="button" data-act="view" data-v="map" aria-pressed="' + (F.view === 'map') + '">Mapa</button></div></div></div>';
+    var body;
+    if (!list.length) {
+      body = '<div class="empty"><h2>Nenhum imóvel com estes filtros</h2><p class="muted">Tenta outra zona, aumenta o preço máximo ou limpa os filtros.</p><button type="button" class="btn btn-primary" data-act="clear">Limpar filtros</button></div>';
+    } else if (F.view === 'map') {
+      if (!list.some(function (p) { return p.id === F.sel; })) F.sel = list[0].id;
+      body = '<div class="mapbox">' + mapHtml(list) + '<p class="map-note">Mapa esquemático, fora de escala. Toca num preço para ver o imóvel.</p></div><div class="map-pick">' + card(byId(F.sel)) + '</div>';
+    } else {
+      body = '<div class="grid">' + list.map(card).join('') + '</div>';
+    }
+    el.innerHTML = head + body;
+  }
+
+  /* ---------- detalhe ---------- */
+  function viewImovel(id) {
+    var p = byId(id);
+    if (!p || p.status !== 'approved') {
+      return '<div class="empty"><h1>Imóvel não encontrado</h1><p class="muted">Este anúncio já não está disponível ou ainda está em verificação.</p><a class="btn btn-primary" href="#explorar">Ver outros imóveis</a></div>';
+    }
+    slide = 0;
+    var a = agentOf(p), fav = S.favs.indexOf(p.id) > -1;
+    var slides = [0, 1, 2].map(function (v) { return '<div class="slide"' + (v ? ' hidden' : '') + ' data-slide="' + v + '">' + scene(p, v) + '</div>'; }).join('');
+    var dots = [0, 1, 2].map(function (v) { return '<button type="button" data-act="dot" data-v="' + v + '" aria-label="Foto ' + (v + 1) + ' de 3"' + (v === 0 ? ' aria-current="true"' : '') + '><i></i></button>'; }).join('');
+    var perM2 = p.mode === 'buy' ? '<div class="fact"><strong>' + kz(Math.round(p.price / p.area)) + '</strong><span>por m²</span></div>' : '';
+    var others = approved().filter(function (o) { return o.id !== p.id && o.mode === p.mode; }).sort(function (x, y) { return (x.zone === p.zone ? 0 : 1) - (y.zone === p.zone ? 0 : 1); }).slice(0, 3);
+    return '<a class="back" href="#explorar">' + ICON.left + 'Voltar aos resultados</a>' +
+      '<div class="detail">' +
+      '<div class="d-gallery"><div class="gallery" id="gallery" role="group" aria-label="Fotos do imóvel">' + slides + '<span class="ph">Fotos ilustrativas</span>' +
+      '<button type="button" class="g-btn g-prev" data-act="slide" data-v="-1" aria-label="Foto anterior">' + ICON.left + '</button><button type="button" class="g-btn g-next" data-act="slide" data-v="1" aria-label="Foto seguinte">' + ICON.right + '</button><div class="g-dots">' + dots + '</div></div></div>' +
+      '<div class="d-head"><p class="price">' + kz(p.price) + (p.mode === 'rent' ? ' <small>/mês</small>' : '') + '</p><h1>' + esc(p.title) + '</h1><p class="zone">' + esc(p.zone) + ', Luanda</p></div>' +
+      '<aside class="d-contact" aria-label="Contactar o anunciante"><div class="agent"><div class="avatar" aria-hidden="true">' + esc(initials(a.name)) + '</div><div><strong>' + esc(a.name) + '</strong><span>Corretor verificado</span></div></div>' +
+      '<button type="button" class="btn btn-primary btn-block" data-act="wa" data-id="' + p.id + '">' + ICON.wa + 'Falar no WhatsApp</button>' +
+      '<div id="phone-slot"><button type="button" class="btn btn-block" data-act="phone">Mostrar número</button></div>' +
+      '<button type="button" class="btn btn-block" data-act="fav" data-id="' + p.id + '" aria-pressed="' + fav + '">' + (fav ? 'Guardado nos favoritos' : 'Guardar nos favoritos') + '</button>' +
+      '<p class="safe">Verificado pela equipa a ' + fmtDate(p.verified || TODAY) + '. Antes de pagar qualquer caução, visita o imóvel e pede o contrato por escrito.</p></aside>' +
+      '<div class="d-info"><div class="facts"><div class="fact"><strong>' + p.beds + '</strong><span>' + (p.beds === 1 ? 'Quarto' : 'Quartos') + '</span></div><div class="fact"><strong>' + p.baths + '</strong><span>Casas de banho</span></div><div class="fact"><strong>' + p.area + ' m²</strong><span>Área</span></div><div class="fact"><strong>' + (p.furn ? 'Sim' : 'Não') + '</strong><span>Mobilado</span></div>' + perM2 + '</div>' +
+      '<section><h2>Sobre o imóvel</h2><p>' + esc(p.desc || 'Sem descrição.') + '</p></section>' +
+      '<section><h2>Comodidades</h2><ul class="amen">' + (p.amen.length ? p.amen.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') : '<li>Não indicadas</li>') + '</ul></section></div></div>' +
+      (others.length ? '<h2 class="sec-title">Outros imóveis para ' + (p.mode === 'rent' ? 'arrendar' : 'comprar') + '</h2><div class="grid">' + others.map(card).join('') + '</div>' : '');
+  }
+  function setSlide(i) {
+    slide = (i + 3) % 3;
+    $$('#gallery .slide').forEach(function (s) { s.hidden = (+s.dataset.slide !== slide); });
+    $$('#gallery .g-dots button').forEach(function (b) { if (+b.dataset.v === slide) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+  }
+
+  /* ---------- favoritos ---------- */
+  function viewFavoritos() {
+    var list = S.favs.map(byId).filter(function (p) { return p && p.status === 'approved'; });
+    var head = '<div class="page-head"><h1>Os teus favoritos</h1><p class="lead">Imóveis que guardaste para comparar depois.</p></div>';
+    if (!list.length) return head + '<div class="empty"><h2>Ainda não guardaste nenhum imóvel</h2><p class="muted">Toca no coração de um imóvel para o guardar aqui.</p><a class="btn btn-primary" href="#explorar">Explorar imóveis</a></div>';
+    return head + '<div class="grid">' + list.map(card).join('') + '</div>';
+  }
+
+  /* ---------- anunciar ---------- */
+  function viewAnunciar() {
+    var steps = '<aside class="panel" aria-label="Como funciona"><h2>Como funciona a verificação</h2><ol class="steps"><li><strong>Envias o anúncio</strong><span>Preenches os dados do imóvel e o teu contacto.</span></li><li><strong>A equipa verifica</strong><span>Confirmamos o telefone, as fotos e o preço.</span></li><li><strong>Fica no ar com o selo</strong><span>Os interessados contactam-te diretamente por WhatsApp.</span></li></ol></aside>';
+    if (submitted) {
+      return '<div class="page-head"><h1>Anúncio enviado</h1></div><div class="two"><div class="panel ok-box"><span class="pill pill-wait">À espera de verificação</span><h2>' + esc(submitted.title) + '</h2><p class="muted">' + esc(submitted.zone) + ' · ' + kz(submitted.price) + (submitted.mode === 'rent' ? ' /mês' : '') + '</p><p>Na versão real, recebes uma mensagem quando a equipa aprovar. Nesta demonstração, abre o painel da equipa para aprovar o anúncio tu mesmo e vê-lo aparecer em Explorar.</p><div class="row"><a class="btn btn-primary" href="#equipa">Abrir painel da equipa</a><button type="button" class="btn" data-act="another">Anunciar outro imóvel</button></div></div>' + steps + '</div>';
+    }
+    var zoneOpts = ZONES.map(function (z) { return '<option>' + z + '</option>'; }).join('');
+    var amen = AMEN.map(function (a, i) { return '<label class="check"><input type="checkbox" name="amen" value="' + a + '"' + (i < 2 ? ' checked' : '') + '> ' + a + '</label>'; }).join('');
+    return '<div class="page-head"><h1>Anuncia o teu imóvel</h1><p class="lead">Publicar é grátis na fase inicial. Cada anúncio passa por uma verificação antes de aparecer.</p></div>' +
+      '<div class="two"><form class="panel" id="ad-form" novalidate><div class="form-grid">' +
+      '<div class="field"><label for="a-mode">Queres</label><select id="a-mode"><option value="rent">Arrendar</option><option value="buy">Vender</option></select></div>' +
+      '<div class="field"><label for="a-kind">Tipo de imóvel</label><select id="a-kind"><option value="apt">Apartamento</option><option value="house">Moradia</option></select></div>' +
+      '<div class="field full"><label for="a-title">Título do anúncio</label><input type="text" id="a-title" placeholder="Por exemplo: T2 mobilado com varanda" maxlength="70" required></div>' +
+      '<div class="field"><label for="a-zone">Zona</label><select id="a-zone">' + zoneOpts + '</select></div>' +
+      '<div class="field"><label for="a-price">Preço em Kz</label><input type="text" inputmode="numeric" id="a-price" placeholder="450000" required></div>' +
+      '<div class="field"><label for="a-beds">Quartos</label><input type="number" id="a-beds" min="0" max="12" value="2"></div>' +
+      '<div class="field"><label for="a-baths">Casas de banho</label><input type="number" id="a-baths" min="0" max="12" value="1"></div>' +
+      '<div class="field"><label for="a-area">Área em m²</label><input type="number" id="a-area" min="10" max="5000" value="80"></div>' +
+      '<div class="field"><span class="lab">Mobilado</span><label class="check"><input type="checkbox" id="a-furn"> Sim, vem mobilado</label></div>' +
+      '<div class="field full"><span class="lab">Comodidades</span><div class="amen-grid">' + amen + '</div></div>' +
+      '<div class="field full"><label for="a-desc">Descrição</label><textarea id="a-desc" maxlength="400" placeholder="Fala do estado do imóvel, da zona e das condições do contrato."></textarea></div>' +
+      '<div class="field full"><span class="lab">Fotos</span><div class="dropzone"><strong>Aqui carregas até 10 fotos reais</strong><span>Nesta demonstração as fotos não são guardadas.</span></div></div>' +
+      '<div class="field"><label for="a-who">O teu nome</label><input type="text" id="a-who" autocomplete="name" required></div>' +
+      '<div class="field"><label for="a-phone">Telefone ou WhatsApp</label><input type="tel" id="a-phone" autocomplete="tel" placeholder="+244 9XX XXX XXX" required></div>' +
+      '</div><p id="a-err" class="pill pill-no" role="alert" hidden style="border-radius:10px"></p>' +
+      '<button type="submit" class="btn btn-primary">Enviar para verificação</button></form>' + steps + '</div>';
+  }
+  function submitAd() {
+    var v = function (id) { return $('#' + id).value.trim(); };
+    var price = Number(v('a-price').replace(/\D/g, ''));
+    var err = $('#a-err'), msg = '';
+    if (!v('a-title')) msg = 'Escreve um título para o anúncio.';
+    else if (!price) msg = 'Indica o preço em Kz, só com números.';
+    else if (!v('a-who')) msg = 'Indica o teu nome.';
+    else if (!v('a-phone')) msg = 'Indica um telefone ou WhatsApp para contacto.';
+    if (msg) { err.textContent = msg; err.hidden = false; return; }
+    var item = L({
+      id: 'u' + Date.now().toString(36), status: 'pending', mode: v('a-mode'), kind: v('a-kind'), title: v('a-title'), zone: v('a-zone'), price: price,
+      beds: +v('a-beds') || 0, baths: +v('a-baths') || 0, area: +v('a-area') || 0, furn: $('#a-furn').checked,
+      amen: $$('input[name="amen"]:checked').map(function (c) { return c.value; }), desc: v('a-desc'), who: v('a-who'), phone: v('a-phone'), pal: Math.floor(Math.random() * PALS.length)
+    });
+    S.items.unshift(item); save(); submitted = item; render();
+    toast('Anúncio enviado para verificação.');
+  }
+
+  /* ---------- equipa ---------- */
+  var CHECKS = ['Telefone confirmado', 'Fotos reais recebidas', 'Preço confere com a zona'];
+  function viewEquipa() {
+    var pend = S.items.filter(function (i) { return i.status === 'pending'; });
+    var done = S.items.filter(function (i) { return i.status !== 'pending'; });
+    var live = approved().length;
+    var html = '<div class="page-head"><h1>Painel da equipa</h1><p class="lead">Só a equipa vê este painel. Cada anúncio é verificado antes de aparecer a quem procura casa.</p></div>' +
+      '<div class="stats"><div class="stat"><strong>' + live + '</strong><span>No ar</span></div><div class="stat"><strong>' + pend.length + '</strong><span>À espera</span></div><div class="stat"><strong>' + S.contacts + '</strong><span>Contactos WhatsApp</span></div></div>' +
+      '<h2 class="sec-title">À espera de verificação</h2>';
+    if (!pend.length) html += '<div class="empty"><h2>Tudo verificado</h2><p class="muted">Não há anúncios à espera. Cria um em Anunciar para testares o fluxo.</p><a class="btn btn-primary" href="#anunciar">Criar anúncio</a></div>';
+    else html += '<div class="queue">' + pend.map(function (p) {
+      var a = agentOf(p);
+      return '<article class="q-item" data-q="' + p.id + '"><div class="thumb">' + scene(p, 0) + '</div><div class="q-body"><div><span class="pill pill-wait">À espera</span></div><h3>' + esc(p.title) + '</h3>' +
+        '<p class="muted">' + esc(p.zone) + ' · ' + kz(p.price) + (p.mode === 'rent' ? ' /mês' : '') + ' · ' + specs(p) + '</p><p class="muted">Enviado por ' + esc(a.name) + ', ' + esc(a.phone) + '</p>' +
+        '<div class="q-checks" role="group" aria-label="Lista de verificação">' + CHECKS.map(function (c, i) { return '<label class="check"><input type="checkbox" data-ck="' + p.id + '"> ' + c + '</label>'; }).join('') + '</div>' +
+        '<div class="q-actions"><button type="button" class="btn btn-primary" data-act="approve" data-id="' + p.id + '" disabled>Aprovar</button><button type="button" class="btn btn-danger" data-act="reject" data-id="' + p.id + '">Rejeitar</button></div></div></article>';
+    }).join('') + '</div>';
+    if (done.length) html += '<h2 class="sec-title">Decididos</h2><ul class="done-list">' + done.map(function (p) {
+      return '<li><span>' + esc(p.title) + ' <span class="muted">· ' + esc(p.zone) + '</span></span><span class="pill ' + (p.status === 'approved' ? 'pill-ok' : 'pill-no') + '">' + (p.status === 'approved' ? 'Aprovado' : 'Rejeitado') + '</span></li>';
+    }).join('') + '</ul>';
+    html += '<div style="margin-top:32px">' + (confirmReset ? '<p style="margin-bottom:8px">Isto apaga os favoritos e os anúncios criados neste navegador.</p><div class="row" style="max-width:360px"><button type="button" class="btn btn-danger" data-act="reset-yes">Sim, repor</button><button type="button" class="btn" data-act="reset-no">Cancelar</button></div>' : '<button type="button" class="btn" data-act="reset">Repor a demonstração</button>') + '</div>';
+    return html;
+  }
+
+  /* ---------- whatsapp sheet ---------- */
+  function openWa(p) {
+    var a = agentOf(p);
+    var msg = 'Olá ' + a.name.split(' ')[0] + ', vi o anúncio "' + p.title + '" em ' + p.zone + ' (' + kz(p.price) + (p.mode === 'rent' ? ' por mês' : '') + ') na Minha Casa. Ainda está disponível? Podemos marcar uma visita?';
+    S.contacts++; save();
+    lastFocus = document.activeElement;
+    $('#sheet').innerHTML = '<h2 id="sheet-title">Mensagem para ' + esc(a.name) + '</h2><p class="muted">Na versão real, o WhatsApp abre com esta mensagem já escrita. Nesta demonstração, podes copiá-la.</p>' +
+      '<textarea id="wa-msg" readonly>' + esc(msg) + '</textarea><div class="row"><button type="button" class="btn btn-primary" data-act="copy">Copiar mensagem</button><button type="button" class="btn" data-act="close">Fechar</button></div>';
+    $('#overlay').hidden = false;
+    var b = $('#sheet [data-act="close"]'); if (b) b.focus();
+  }
+  function closeSheet() { $('#overlay').hidden = true; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+
+  var tt;
+  function toast(m) { var t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(function () { t.classList.remove('show'); }, 2400); }
+
+  /* ---------- router ---------- */
+  function route() {
+    var h = (location.hash || '').replace(/^#/, '');
+    var view = 'explorar', arg = null;
+    if (h.indexOf('imovel-') === 0) { view = 'imovel'; arg = h.slice(7); }
+    else if (['explorar', 'favoritos', 'anunciar', 'equipa'].indexOf(h) > -1) view = h;
+    if (view !== 'anunciar') submitted = null;
+    confirmReset = false;
+    current = { view: view, arg: arg };
+    render(); window.scrollTo(0, 0);
+  }
+  function render() {
+    var m = $('#main');
+    if (current.view === 'explorar') { m.innerHTML = viewExplorar(); renderFilters(); renderResults(); }
+    else if (current.view === 'imovel') m.innerHTML = viewImovel(current.arg);
+    else if (current.view === 'favoritos') m.innerHTML = viewFavoritos();
+    else if (current.view === 'anunciar') m.innerHTML = viewAnunciar();
+    else m.innerHTML = viewEquipa();
+    updateNav();
+  }
+  function refocus(sel) { var e = $(sel); if (e) e.focus(); }
+
+  function toggleFav(id) {
+    var i = S.favs.indexOf(id);
+    if (i > -1) { S.favs.splice(i, 1); toast('Removido dos favoritos.'); } else { S.favs.push(id); toast('Guardado nos favoritos.'); }
+    save();
+    if (current.view === 'favoritos') { render(); return; }
+    $$('[data-act="fav"][data-id="' + id + '"]').forEach(function (b) {
+      var on = S.favs.indexOf(id) > -1;
+      b.setAttribute('aria-pressed', on);
+      if (b.classList.contains('fav')) { b.setAttribute('aria-label', on ? 'Remover dos favoritos' : 'Guardar nos favoritos'); b.querySelector('span').innerHTML = heart(on); }
+      else b.textContent = on ? 'Guardado nos favoritos' : 'Guardar nos favoritos';
+    });
+    updateNav();
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act]'); if (!t) return;
+    var act = t.dataset.act, id = t.dataset.id, v = t.dataset.v, p;
+    if (act === 'fav') { toggleFav(id); }
+    else if (act === 'mode') { F.mode = v; F.max = 0; F.sel = ''; renderFilters(); renderResults(); refocus('[data-act="mode"][data-v="' + v + '"]'); }
+    else if (act === 'beds') { F.beds = +v; renderFilters(); renderResults(); refocus('[data-act="beds"][data-v="' + v + '"]'); }
+    else if (act === 'view') { F.view = v; renderResults(); refocus('[data-act="view"][data-v="' + v + '"]'); }
+    else if (act === 'more') { F.open = !F.open; renderFilters(); refocus('[data-act="more"]'); }
+    else if (act === 'clear') { F.q = ''; F.zone = ''; F.max = 0; F.beds = 0; F.furn = false; renderFilters(); renderResults(); }
+    else if (act === 'pin') { F.sel = id; renderResults(); refocus('.pin[data-id="' + id + '"]'); }
+    else if (act === 'slide') { setSlide(slide + (+v)); }
+    else if (act === 'dot') { setSlide(+v); }
+    else if (act === 'phone') { p = byId(current.arg); $('#phone-slot').innerHTML = '<p class="phone">' + esc(agentOf(p).phone) + '<br><small class="muted">Número de exemplo</small></p>'; }
+    else if (act === 'wa') { p = byId(id); if (p) openWa(p); }
+    else if (act === 'copy') {
+      var ta = $('#wa-msg');
+      var fallback = function () { ta.focus(); ta.select(); toast('Seleciona e copia a mensagem.'); };
+      try { navigator.clipboard.writeText(ta.value).then(function () { toast('Mensagem copiada.'); }, fallback); } catch (err) { fallback(); }
+    }
+    else if (act === 'close') { closeSheet(); }
+    else if (act === 'another') { submitted = null; render(); window.scrollTo(0, 0); }
+    else if (act === 'approve') { p = byId(id); if (p && !t.disabled) { p.status = 'approved'; p.verified = TODAY; save(); render(); toast('Anúncio aprovado. Já aparece em Explorar.'); } }
+    else if (act === 'reject') { p = byId(id); if (p) { p.status = 'rejected'; save(); render(); toast('Anúncio rejeitado.'); } }
+    else if (act === 'reset') { confirmReset = true; render(); }
+    else if (act === 'reset-no') { confirmReset = false; render(); }
+    else if (act === 'reset-yes') { S = freshState(); save(); confirmReset = false; F.sel = ''; render(); toast('Demonstração reposta.'); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !$('#overlay').hidden) { closeSheet(); return; }
+    var t = e.target;
+    if ((e.key === 'Enter' || e.key === ' ') && t.matches && t.matches('.pin')) { e.preventDefault(); F.sel = t.dataset.id; renderResults(); refocus('.pin[data-id="' + F.sel + '"]'); }
+  });
+  $('#overlay').addEventListener('click', function (e) { if (e.target.id === 'overlay') closeSheet(); });
+  document.addEventListener('input', function (e) { if (e.target.id === 'f-q') { F.q = e.target.value; renderResults(); } });
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.id === 'f-zone') { F.zone = t.value; renderResults(); }
+    else if (t.id === 'f-max') { F.max = +t.value; renderResults(); }
+    else if (t.id === 'f-furn') { F.furn = t.checked; renderResults(); }
+    else if (t.id === 'f-sort') { F.sort = t.value; renderResults(); refocus('#f-sort'); }
+    else if (t.dataset && t.dataset.ck) {
+      var box = t.closest('.q-item'), cks = $$('[data-ck]', box);
+      $('[data-act="approve"]', box).disabled = !cks.every(function (c) { return c.checked; });
+    }
+  });
+  document.addEventListener('submit', function (e) { if (e.target.id === 'ad-form') { e.preventDefault(); submitAd(); } });
+  window.addEventListener('hashchange', route);
+  route();
+})();
+</script>
+</body>
+</html>

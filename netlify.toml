@@ -1,0 +1,3 @@
+# Site estático: não precisa de comando de build.
+[build]
+  publish = "."
